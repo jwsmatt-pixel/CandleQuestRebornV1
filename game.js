@@ -1,4 +1,4 @@
-const CANDLE_QUEST_BUILD = "v21_trend_gap_fix";
+const CANDLE_QUEST_BUILD = "v22_live_xp_score_pop";
 console.log("Candle Quest build:", CANDLE_QUEST_BUILD);
 
 function showBuildBadge(){
@@ -428,6 +428,31 @@ function updateStreakHud(){
 }
 
 
+
+function showScoreXPPop(amount, label="Bonus XP", isPerfect=false){
+  if(!run || !amount || amount <= 0) return;
+
+  const scoreEl = $("scoreText");
+  if(!scoreEl) return;
+
+  const box = scoreEl.closest ? scoreEl.closest(".hud-stats") : scoreEl.parentElement;
+  if(!box) return;
+
+  box.classList.remove("score-xp-pulse");
+  void box.offsetWidth;
+  box.classList.add("score-xp-pulse");
+
+  const pop = document.createElement("div");
+  pop.className = isPerfect ? "score-xp-pop perfect" : "score-xp-pop";
+  pop.innerHTML = `<b>+${amount} XP</b><span>${label}</span>`;
+  box.appendChild(pop);
+
+  setTimeout(()=>{
+    if(pop && pop.parentNode) pop.parentNode.removeChild(pop);
+  },1500);
+}
+
+
 function startRun(worldId=activeWorld){
   activeWorld = worldId;
   const world = worlds.find(w=>w.id===worldId) || worlds[0];
@@ -538,7 +563,7 @@ function endRun(){
   const runComment = pickRunComment(correct);
   const fastLine = (run.fastCount || 0) > 0 ? `<span class="summary-bonus">⚡ ${run.fastCount} under-2s reads · +${(run.fastCount || 0)*3} XP</span>` : "";
   const perfectLine = correct >= maxQ ? `<span class="summary-bonus perfect">PERFECT BONUS +50 XP</span>` : "";
-  const earnedLine = bonusXP > 0 ? `<span class="summary-bonus xp-total">Bonus XP awarded: +${bonusXP}</span>` : "";
+  const earnedLine = bonusXP > 0 ? `<span class="summary-bonus xp-total">Live bonus XP included: +${bonusXP}</span>` : "";
   $("resultBody").innerHTML = `
     <div class="summary-correct">${correct}/${maxQ}</div>
     <div class="summary-label">correct reads</div>
@@ -1020,7 +1045,13 @@ function answer(label){
     run.combo++;
     run.correctCount = (run.correctCount || 0) + 1;
     run.longestStreak = Math.max(run.longestStreak || 0, run.combo || 0);
-    if(underTwoBonus) run.fastCount = (run.fastCount || 0) + 1;
+    if(underTwoBonus){
+      run.fastCount = (run.fastCount || 0) + 1;
+      showScoreXPPop(3, "Fast read");
+    }
+    if((run.correctCount || 0) >= (run.maxQuests || 10) && (run.questCount || 0) === ((run.maxQuests || 10) - 1)){
+      showScoreXPPop(50, "Perfect run", true);
+    }
     run.score += 10 + Math.min(10, run.combo*2) + speedBonus + underTwoBonus;
   } else {
     run.combo = 0;
