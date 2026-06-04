@@ -1,4 +1,4 @@
-const CANDLE_QUEST_BUILD = "v23_summary_streak_lost";
+const CANDLE_QUEST_BUILD = "v24_summary_layout_clean";
 console.log("Candle Quest build:", CANDLE_QUEST_BUILD);
 
 function showBuildBadge(){
@@ -589,9 +589,11 @@ function endRun(){
     <div class="summary-label">correct reads</div>
     <div class="summary-comment">${runComment}</div>
     <div class="summary-meta">Longest streak: ${run.longestStreak || 0}x</div>
-    ${fastLine}
-    ${perfectLine}
-    ${earnedLine}
+    <div class="summary-bonus-row">
+      ${fastLine}
+      ${perfectLine}
+      ${earnedLine}
+    </div>
   `;
 
   run=null;
