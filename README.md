@@ -1,6 +1,5 @@
 # Candle Quest Reborn v1
 
-A bare-bones rebuild designed around what is most playable for a regular 15–28 year old:
 
 - 90-second runs
 - instant start
