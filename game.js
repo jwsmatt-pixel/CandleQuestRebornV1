@@ -1,11 +1,11 @@
-const CANDLE_QUEST_BUILD = "v15_fixed_quest_timer";
+const CANDLE_QUEST_BUILD = "v16_correct_count_summary";
 console.log("Candle Quest build:", CANDLE_QUEST_BUILD);
 
 function showBuildBadge(){
   if(!document.getElementById("buildBadge")){
     const b = document.createElement("div");
     b.id = "buildBadge";
-    b.textContent = "v15 · Fixed Timer";
+    b.textContent = "v16 · Correct /10";
     b.style.cssText = "position:fixed;right:10px;bottom:10px;z-index:99999;background:rgba(7,12,9,.86);color:white;border:1px solid rgba(255,255,255,.55);border-radius:999px;padding:6px 10px;font:800 11px system-ui;box-shadow:0 4px 14px rgba(0,0,0,.25);pointer-events:none;";
     document.body.appendChild(b);
   }
@@ -180,6 +180,7 @@ function startRun(worldId=activeWorld){
     // v15: Quest Moment timer. Replay has no timer;
     // each Quest Moment has 7 seconds.
     questCount:0,
+    correctCount:0,
     maxQuests:10,
     questTime:7,
     questLeft:7,
@@ -219,8 +220,10 @@ function endRun(){
   $("finalScore").textContent = run.score;
   $("finalXP").textContent = earned;
   $("finalBest").textContent = state.best;
-  $("resultTitle").textContent = run.score>=80 ? "Elite run." : run.score>=55 ? "Solid rep." : "Good warm-up.";
-  $("resultBody").textContent = run.score>=100 ? "Strong Quest run. You read the channel quickly under decision pressure." : run.score>=65 ? "Good reads. Keep improving speed and zone recognition." : "Focus on the channel first, then the candle. Clean reads beat rushing.";
+  $("resultTitle").textContent = (run.correctCount || 0)>=8 ? "Elite run." : (run.correctCount || 0)>=6 ? "Solid rep." : "Good warm-up.";
+  const correctSummary = `${run.correctCount || 0}/${run.maxQuests || 10} correct reads`;
+  const performanceText = run.score>=100 ? "Strong Quest run. You read the channel quickly under decision pressure." : run.score>=65 ? "Good reads. Keep improving speed and zone recognition." : "Focus on the channel first, then the candle. Clean reads beat rushing.";
+  $("resultBody").innerHTML = `<strong>${correctSummary}</strong><br>${performanceText}`;
   run=null;
   openScreen("result");
 }
@@ -625,6 +628,7 @@ function answer(label){
   if(ok){
     const speedBonus = Math.max(0, run.questLeft || 0);
     run.combo++;
+    run.correctCount = (run.correctCount || 0) + 1;
     run.score += 10 + Math.min(10, run.combo*2) + speedBonus;
   } else {
     run.combo = 0;
