@@ -11,6 +11,8 @@
 
 ## How to run
 
+Paste in Browser: https://jwsmatt-pixel.github.io/CandleQuestRebornV1/
+
 Double click `START_GAME.bat`, then open:
 
 http://127.0.0.1:8123
