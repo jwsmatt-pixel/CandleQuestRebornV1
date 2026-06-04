@@ -668,3 +668,56 @@ body[data-skin="gold"] .definition-card{
     font-size:15px;
   }
 }
+
+
+/* v23 summary spacing + streak lost */
+.summary-label{
+  font-size:clamp(16px,3.2vw,24px)!important;
+  margin-bottom:10px!important;
+  letter-spacing:.035em!important;
+}
+.summary-comment{
+  font-size:clamp(18px,3.7vw,30px)!important;
+  line-height:1.04!important;
+  max-width:720px!important;
+  margin:8px auto 12px!important;
+}
+.summary-correct{
+  font-size:clamp(54px,12vw,96px)!important;
+}
+.summary-meta{
+  font-size:clamp(14px,2.4vw,19px)!important;
+  margin-top:6px!important;
+}
+.summary-bonus{
+  margin-top:8px!important;
+  padding:8px 12px!important;
+}
+.streak-pill.lost{
+  color:#fff;
+  background:linear-gradient(135deg,#d7263d,#ff5b5b);
+  border-color:rgba(255,91,91,.75);
+  box-shadow:0 0 20px rgba(255,91,91,.38), 0 8px 20px rgba(0,0,0,.16);
+  animation:streakLostShake .55s ease both;
+}
+@keyframes streakLostShake{
+  0%{transform:translateX(0) scale(1)}
+  15%{transform:translateX(-7px) scale(1.03)}
+  30%{transform:translateX(7px) scale(1.03)}
+  45%{transform:translateX(-5px) scale(1.02)}
+  60%{transform:translateX(5px) scale(1.02)}
+  75%{transform:translateX(-2px)}
+  100%{transform:translateX(0) scale(1)}
+}
+@media(max-width:850px){
+  .summary-comment{
+    font-size:clamp(18px,5.4vw,26px)!important;
+    line-height:1.08!important;
+  }
+  .summary-label{
+    font-size:clamp(15px,4.3vw,21px)!important;
+  }
+  .summary-correct{
+    font-size:clamp(52px,18vw,84px)!important;
+  }
+}

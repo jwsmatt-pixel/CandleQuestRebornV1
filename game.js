@@ -1,4 +1,4 @@
-const CANDLE_QUEST_BUILD = "v22_live_xp_score_pop";
+const CANDLE_QUEST_BUILD = "v23_summary_streak_lost";
 console.log("Candle Quest build:", CANDLE_QUEST_BUILD);
 
 function showBuildBadge(){
@@ -450,6 +450,26 @@ function showScoreXPPop(amount, label="Bonus XP", isPerfect=false){
   setTimeout(()=>{
     if(pop && pop.parentNode) pop.parentNode.removeChild(pop);
   },1500);
+}
+
+
+function showStreakLost(){
+  const hud = document.querySelector(".game-hud");
+  if(!hud) return;
+
+  let pill = document.getElementById("streakPill");
+  if(!pill){
+    pill = document.createElement("div");
+    pill.id = "streakPill";
+    hud.appendChild(pill);
+  }
+
+  pill.textContent = "STREAK LOST";
+  pill.className = "streak-pill lost";
+
+  setTimeout(()=>{
+    updateStreakHud();
+  },900);
 }
 
 
@@ -932,10 +952,12 @@ function stopQuestTimer(){
 function timeoutQuestMoment(){
   if(!run || !run.current) return;
 
+  const lostStreak = (run.combo || 0) >= 2;
   run.combo = 0;
   run.score = Math.max(0, run.score - 5);
+  if(lostStreak) showStreakLost();
   $("scoreText").textContent = run.score;
-  updateStreakHud();
+  if(!lostStreak) updateStreakHud();
   $("runHint").textContent = `Time up — answer was ${run.current}.`;
 
   document.querySelectorAll("#answerPad button").forEach(b=>{
@@ -1054,12 +1076,14 @@ function answer(label){
     }
     run.score += 10 + Math.min(10, run.combo*2) + speedBonus + underTwoBonus;
   } else {
+    const lostStreak = (run.combo || 0) >= 2;
     run.combo = 0;
     run.score = Math.max(0, run.score - 5);
+    if(lostStreak) showStreakLost();
   }
 
   $("scoreText").textContent = run.score;
-  updateStreakHud();
+  if(ok) updateStreakHud();
   $("runHint").textContent = ok ? "Correct read — market resumes." : `Wrong read — answer was ${run.current}.`;
 
   document.querySelectorAll("#answerPad button").forEach(b=>{
