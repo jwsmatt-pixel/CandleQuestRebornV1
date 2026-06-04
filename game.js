@@ -1,4 +1,4 @@
-const CANDLE_QUEST_BUILD = "v18_xp_pop_rewards";
+const CANDLE_QUEST_BUILD = "v21_trend_gap_fix";
 console.log("Candle Quest build:", CANDLE_QUEST_BUILD);
 
 function showBuildBadge(){
@@ -64,6 +64,217 @@ const skins = [
   {id:"gold", name:"Gold Floor", price:600, desc:"Premium pro-desk feel."}
 ];
 
+
+const patternDefinitions = {
+  "Candle Basics": [
+    {
+      name:"Bullish Engulfing",
+      type:"Reversal / strength shift",
+      read:"A strong green candle fully takes control after a weaker red candle.",
+      location:"Most useful near Range Low, support, or after a sell-side flush.",
+      cue:"Sellers pushed first, buyers absorbed it, then closed strong."
+    },
+    {
+      name:"Bearish Engulfing",
+      type:"Reversal / weakness shift",
+      read:"A strong red candle fully takes control after a weaker green candle.",
+      location:"Most useful near Range High, resistance, or after a buy-side push.",
+      cue:"Buyers pushed first, sellers absorbed it, then closed weak."
+    },
+    {
+      name:"Hammer",
+      type:"Rejection candle",
+      read:"A candle with a long lower wick and stronger close, showing rejection below.",
+      location:"Best near Range Low or support.",
+      cue:"Price probed lower, failed to hold, then buyers reclaimed."
+    },
+    {
+      name:"Shooting Star",
+      type:"Rejection candle",
+      read:"A candle with a long upper wick and weaker close, showing rejection above.",
+      location:"Best near Range High or resistance.",
+      cue:"Price probed higher, failed to hold, then sellers pushed back."
+    },
+    {
+      name:"Doji",
+      type:"Indecision",
+      read:"Open and close are very close together, showing hesitation.",
+      location:"More meaningful at key zones than in the middle of nowhere.",
+      cue:"Neither side achieved a clear close. Wait for confirmation."
+    }
+  ],
+  "Levels": [
+    {
+      name:"Support Reclaim",
+      type:"Failed breakdown / reclaim",
+      read:"Price dips below support or Range Low, then closes back above it.",
+      location:"Range Low or support area.",
+      cue:"The breakdown failed. Buyers reclaimed the level."
+    },
+    {
+      name:"Resistance Reject",
+      type:"Failed breakout / rejection",
+      read:"Price pushes into resistance or Range High, then closes back below it.",
+      location:"Range High or resistance area.",
+      cue:"The breakout attempt failed. Sellers defended the level."
+    },
+    {
+      name:"Mean Chop",
+      type:"No-trade / balance",
+      read:"Price rotates around the Channel Mean without clean acceptance either way.",
+      location:"Middle of the channel.",
+      cue:"The market is balanced. Signals are weaker here."
+    },
+    {
+      name:"Range Bounce",
+      type:"Rotation",
+      read:"Price rejects one edge of the channel and rotates back inward.",
+      location:"Range High or Range Low.",
+      cue:"The edge held. Expect rotation toward the mean or opposite side."
+    },
+    {
+      name:"Level Break",
+      type:"Acceptance attempt",
+      read:"Price closes beyond a key channel level with intent.",
+      location:"Usually Range High or Range Low.",
+      cue:"Do not trust the wick alone. Look for close and hold."
+    }
+  ],
+  "Breakouts": [
+    {
+      name:"Clean Breakout",
+      type:"Expansion",
+      read:"Price clearly breaks and closes outside Range High.",
+      location:"Range High.",
+      cue:"A clean breakout should show acceptance outside the channel, not just a wick."
+    },
+    {
+      name:"Failed Breakout",
+      type:"Trap / rejection",
+      read:"Price breaks above Range High, then fails back inside the range.",
+      location:"Range High.",
+      cue:"Late buyers can get trapped when price cannot hold above."
+    },
+    {
+      name:"Breakdown",
+      type:"Downside expansion",
+      read:"Price closes below Range Low with pressure.",
+      location:"Range Low.",
+      cue:"Support failed. Watch for continuation or reclaim."
+    },
+    {
+      name:"Retest Hold",
+      type:"Continuation confirmation",
+      read:"Price breaks a level, returns to test it, and holds from the other side.",
+      location:"Old resistance becomes support, or old support becomes resistance.",
+      cue:"The retest confirms acceptance."
+    },
+    {
+      name:"Range Expansion",
+      type:"Volatility shift",
+      read:"Price expands with wider candles and stronger movement, but still remains inside the current channel.",
+      location:"Inside the range after compression or quiet movement.",
+      cue:"Volatility expanded, but price has not cleanly escaped the range yet."
+    }
+  ],
+  "Trend": [
+    {
+      name:"Uptrend Continuation",
+      type:"Trend follow-through",
+      read:"Price keeps forming higher lows and pushes upward after pullbacks.",
+      location:"Above Channel Mean or after holding a pullback.",
+      cue:"Buyers defend dips and push to new highs."
+    },
+    {
+      name:"Downtrend Continuation",
+      type:"Trend follow-through",
+      read:"Price keeps forming lower highs and sells off after bounces.",
+      location:"Below Channel Mean or after rejecting a bounce.",
+      cue:"Sellers defend rallies and push to new lows."
+    },
+    {
+      name:"Pullback Hold",
+      type:"Trend support",
+      read:"Price pulls back but holds structure before continuing.",
+      location:"Trendline, prior breakout, or Channel Mean.",
+      cue:"A pullback is healthy if structure holds."
+    },
+    {
+      name:"Lower High",
+      type:"Bearish structure",
+      read:"Price bounces but fails below the previous high.",
+      location:"Often near resistance or below Channel Mean.",
+      cue:"Buyers could not reclaim higher ground."
+    },
+    {
+      name:"Trend Break",
+      type:"Structure failure",
+      read:"Price breaks the pattern of higher lows or lower highs.",
+      location:"At a key structure level.",
+      cue:"The prior trend is losing control. Wait for confirmation."
+    }
+  ],
+  "Risk Brain": [
+    {
+      name:"Good Read Bad Trade",
+      type:"Execution warning",
+      read:"The pattern may be correct, but the entry, stop, or reward-to-risk is poor.",
+      location:"Usually after price already moved too far.",
+      cue:"A good read is not automatically a good trade."
+    },
+    {
+      name:"No-Trade Chop",
+      type:"Patience",
+      read:"Price is noisy, balanced, and lacking clean location.",
+      location:"Often around Channel Mean.",
+      cue:"No-trade is a valid decision."
+    },
+    {
+      name:"Stop Too Tight",
+      type:"Risk mistake",
+      read:"The stop is placed where normal candle noise can easily hit it.",
+      location:"Too close to the entry or inside the setup zone.",
+      cue:"Give the idea enough room to breathe."
+    },
+    {
+      name:"Stop Too Wide",
+      type:"Risk mistake",
+      read:"The stop is so far away that the reward no longer justifies the risk.",
+      location:"Usually chasing after a large move.",
+      cue:"Good direction with bad risk can still be a bad trade."
+    },
+    {
+      name:"Clean Plan",
+      type:"Process",
+      read:"Clear location, clear invalidation, and reasonable reward-to-risk.",
+      location:"At a key level with a defined setup.",
+      cue:"Plan first. Execute second."
+    }
+  ]
+};
+
+function renderLibrary(category="Candle Basics"){
+  const tabs = Object.keys(patternDefinitions);
+  const tabsEl = $("libraryTabs");
+  const grid = $("definitionGrid");
+  if(!tabsEl || !grid) return;
+
+  tabsEl.innerHTML = tabs.map(t=>`<button class="${t===category?'active':''}" onclick="renderLibrary('${t}')">${t}</button>`).join("");
+
+  grid.innerHTML = patternDefinitions[category].map((d,i)=>`
+    <article class="definition-card">
+      <div class="definition-topline">
+        <span class="definition-number">${i+1}</span>
+        <span class="definition-type">${d.type}</span>
+      </div>
+      <h3>${d.name}</h3>
+      <p><b>Read:</b> ${d.read}</p>
+      <p><b>Best location:</b> ${d.location}</p>
+      <p class="definition-cue"><b>Quest cue:</b> ${d.cue}</p>
+    </article>
+  `).join("");
+}
+
 function loadState(){
   try{
     const raw = localStorage.getItem("candleQuestRebornV1");
@@ -107,6 +318,7 @@ function openScreen(id){
   $(id).classList.add("active");
   if(id==="map") renderMap();
   if(id==="shop") renderShop();
+  if(id==="library") renderLibrary();
   if(id==="home") drawMini();
 }
 function renderMap(){
@@ -548,38 +760,99 @@ function addCandle(forced=null){
       o=Math.max(prev-0.25,S+0.35);l=S-0.45;c=capStep(S+1.55,1.95);h=c+0.3;
     }
     else if(p==="Level Break"){
-      o=Math.min(prev+0.25,R-0.45);c=capStep(R+1.35,1.95);h=c+0.34;l=o-0.25;
+      // Level Break = closes beyond the level, but not as decisively as a clean breakout.
+      o=Math.min(prev+0.25,R-0.45);
+      c=R+0.85;
+      h=c+0.34;
+      l=o-0.25;
     }
-    else if(p==="Clean Breakout"||p==="Range Expansion"){
-      o=Math.min(prev+0.25,R-0.4);c=capStep(R+1.5,2.1);h=c+0.36;l=o-0.28;
-      run.support += 1.0; run.resistance += 2.0; run.midpoint=(run.support+run.resistance)/2;
+    else if(p==="Clean Breakout"){
+      // Clean Breakout = must visibly clear and close outside Range High.
+      // Do not immediately move the range before drawing, or the breakout becomes invisible.
+      o=Math.min(prev+0.25,R-0.55);
+      c=R+2.15;
+      h=c+0.42;
+      l=o-0.28;
+    }
+    else if(p==="Range Expansion"){
+      // Range Expansion = wider volatility and stronger movement, but still inside the channel.
+      // It should feel like the range is becoming active, not like price has escaped it.
+      const direction = prev < run.midpoint ? 1 : -1;
+      if(direction > 0){
+        o=Math.max(S+1.15, Math.min(prev, R-2.6));
+        c=Math.min(R-0.65, o+2.05);
+        h=Math.min(R-0.18, c+0.62);
+        l=Math.max(S+0.25, o-0.48);
+      } else {
+        o=Math.min(R-1.15, Math.max(prev, S+2.6));
+        c=Math.max(S+0.65, o-2.05);
+        h=Math.min(R-0.25, o+0.48);
+        l=Math.max(S+0.18, c-0.62);
+      }
     }
     else if(p==="Failed Breakout"){
-      o=Math.min(prev+0.2,R-0.25);h=R+1.1;c=capStep(R-0.95,1.9);l=c-0.3;
+      // Failed Breakout = wick outside Range High, close back inside.
+      o=Math.min(prev+0.2,R-0.25);
+      h=R+1.35;
+      c=R-0.85;
+      l=c-0.3;
     }
     else if(p==="Breakdown"){
-      o=Math.max(prev-0.2,S+0.4);c=capStep(S-1.35,2.1);h=o+0.3;l=c-0.42;
-      run.support -= 1.5; run.resistance -= 0.8; run.midpoint=(run.support+run.resistance)/2;
+      // Breakdown = must visibly clear and close outside Range Low.
+      o=Math.max(prev-0.2,S+0.55);
+      c=S-2.05;
+      h=o+0.3;
+      l=c-0.46;
     }
-    else if(p==="Retest Hold"||p==="Pullback Hold"){
-      o=Math.max(prev-0.15,R+0.95);l=R-0.18;c=capStep(R+1.45,1.7);h=c+0.28;
+    else if(p==="Retest Hold"){
+      // Breakout context: hold above the old Range High after a retest.
+      // Keep it continuous from the previous close; no vertical gap.
+      o=prev;
+      l=Math.min(o-0.45, R-0.18);
+      c=Math.max(o+0.95, R+0.75);
+      h=c+0.32;
+    }
+    else if(p==="Pullback Hold"){
+      // Trend context: pullback holds, then buyers respond.
+      // Start from previous close so the candle does not jump across the chart.
+      run.regime="trend"; run.trendDir=1;
+      o=prev;
+      l=o-1.05;
+      c=o+1.25;
+      h=c+0.34;
     }
     else if(p==="Uptrend Continuation"){
       run.regime="trend"; run.trendDir=1;
-      o=prev-0.22;c=capStep(prev+1.35,1.75);h=c+0.34;l=o-0.28;
+      // Larger but continuous bullish trend candle.
+      o=prev;
+      c=o+1.45;
+      h=c+0.36;
+      l=o-0.34;
     }
     else if(p==="Downtrend Continuation"){
       run.regime="trend"; run.trendDir=-1;
-      o=prev+0.22;c=capStep(prev-1.35,1.75);h=o+0.34;l=c-0.28;
+      // Larger but continuous bearish trend candle.
+      o=prev;
+      c=o-1.45;
+      h=o+0.36;
+      l=c-0.34;
     }
     else if(p==="Trend Break"){
       run.regime="trend";
-      o=prev+0.15;c=capStep(prev-1.65,2.0);h=o+0.3;l=c-0.4;
+      // Continuous bearish structure break; no gap.
+      o=prev;
+      c=o-1.75;
+      h=o+0.32;
+      l=c-0.42;
       run.trendDir=-1;
     }
     else if(p==="Lower High"){
       run.regime="trend"; run.trendDir=-1;
-      o=prev+0.28;h=prev+0.82;c=capStep(prev-0.95,1.6);l=c-0.28;
+      // Bounce fails from near prior price, then closes weak.
+      o=prev;
+      h=o+0.82;
+      c=o-1.05;
+      l=c-0.3;
     }
     else if(p==="Good Read Bad Trade"||p==="Stop Too Wide"){
       o=capStep(M,1.2);c=capStep(M+1.0,1.5);h=c+0.35;l=M-2.2;
@@ -718,8 +991,9 @@ function getSetupTarget(pattern){
   const trendDown = ["Downtrend Continuation","Trend Break","Lower High"];
   if(upper.includes(pattern)) return R - 0.75;
   if(lower.includes(pattern)) return S + 0.75;
-  if(trendUp.includes(pattern)) return run.price + 1.1;
-  if(trendDown.includes(pattern)) return run.price - 1.1;
+  // Trend setups should build near current price/structure, not jump to a channel extreme.
+  if(trendUp.includes(pattern)) return run.price + 0.45;
+  if(trendDown.includes(pattern)) return run.price - 0.45;
   return M;
 }
 
@@ -933,6 +1207,7 @@ setInterval(()=>{if($("home").classList.contains("active"))drawMini()},1800);
 saveState();
 renderMap();
 renderShop();
+renderLibrary();
 drawMini();
 
 
