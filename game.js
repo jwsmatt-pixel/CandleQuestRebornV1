@@ -1,3 +1,5 @@
+const CANDLE_QUEST_BUILD = "v13_quest_moment_7s_timer";
+console.log("Candle Quest build:", CANDLE_QUEST_BUILD);
 const $ = id => document.getElementById(id);
 
 const state = loadState();
@@ -161,25 +163,29 @@ function startRun(worldId=activeWorld){
     lastDirection:0,
     edgeMemory:null,
     setupPhase:null,
-    setupPulse:0
+    setupPulse:0,
+
+    // v13 Quest Moment timer:
+    // no timer while price action is replaying.
+    // 7-second timer only appears during each Quest Moment.
+    questCount:0,
+    maxQuests:10,
+    questTime:7,
+    questLeft:7,
+    questTimer:null
   };
   for(let i=0;i<28;i++) addCandle();
   $("runMode").textContent = world.title;
-  $("runHint").textContent = "90-second run. Watch the channel and answer Quest Moments fast.";
+  $("runHint").textContent = "Watch the replay. Timer starts at Quest Moment.";
   $("scoreText").textContent = "0";
-  $("timeText").textContent = "90";
+  $("timeText").textContent = "—";
   $("answerPad").innerHTML = "";
   $("freezeBanner").classList.add("hidden");
   openScreen("game");
   drawGame();
-  run.timer = setInterval(()=>{
-    // v12: true arcade timer. The 90-second clock keeps running
-    // during replay, setup build-up, Quest Moment, and answer selection.
-    if(!run) return;
-    run.time--;
-    $("timeText").textContent = run.time;
-    if(run.time<=0) endRun();
-  },1000);
+  // v13: no global 90-second timer.
+  // The timer only starts when a Quest Moment asks the user to answer.
+  run.timer = null;
   run.tick = setInterval(()=>{
     if(!run || run.paused) return;
     addCandle();
@@ -189,7 +195,7 @@ function startRun(worldId=activeWorld){
   },520);
 }
 function quitRun(){
-  if(run){clearInterval(run.timer);clearInterval(run.tick);}
+  if(run){clearInterval(run.timer);clearInterval(run.tick);clearInterval(run.questTimer);clearInterval(run.questTimer);}
   run=null;
   openScreen("home");
 }
@@ -204,7 +210,7 @@ function endRun(){
   $("finalXP").textContent = earned;
   $("finalBest").textContent = state.best;
   $("resultTitle").textContent = run.score>=80 ? "Elite run." : run.score>=55 ? "Solid rep." : "Good warm-up.";
-  $("resultBody").textContent = run.score>=80 ? "You are reading context quickly. Keep stacking reps." : run.score>=55 ? "You recognised enough to progress. Try to improve decision speed." : "Focus on one world at a time. Clean reps beat rushing.";
+  $("resultBody").textContent = run.score>=100 ? "Strong Quest run. You read the channel quickly under decision pressure." : run.score>=65 ? "Good reads. Keep improving speed and zone recognition." : "Focus on the channel first, then the candle. Clean reads beat rushing.";
   run=null;
   openScreen("result");
 }
@@ -473,11 +479,76 @@ function addCandle(forced=null){
   while(run.candles.length>42) run.candles.shift();
 }
 
+
+function startQuestTimer(){
+  if(!run) return;
+  clearInterval(run.questTimer);
+  run.questLeft = run.questTime || 7;
+  $("timeText").textContent = run.questLeft;
+
+  run.questTimer = setInterval(()=>{
+    if(!run || !run.paused || !run.current) return;
+    run.questLeft--;
+    $("timeText").textContent = run.questLeft;
+
+    if(run.questLeft <= 0){
+      clearInterval(run.questTimer);
+      timeoutQuestMoment();
+    }
+  },1000);
+}
+
+function stopQuestTimer(){
+  if(!run) return;
+  clearInterval(run.questTimer);
+  run.questTimer = null;
+}
+
+function timeoutQuestMoment(){
+  if(!run || !run.current) return;
+
+  run.combo = 0;
+  run.score = Math.max(0, run.score - 5);
+  $("scoreText").textContent = run.score;
+  $("runHint").textContent = `Time up — answer was ${run.current}.`;
+
+  document.querySelectorAll("#answerPad button").forEach(b=>{
+    b.disabled = true;
+    if(b.textContent === run.current) b.classList.add("correct");
+  });
+
+  setTimeout(()=>finishQuestMoment(),850);
+}
+
+function finishQuestMoment(){
+  if(!run) return;
+  stopQuestTimer();
+
+  run.questCount = (run.questCount || 0) + 1;
+
+  if(run.questCount >= (run.maxQuests || 10)){
+    endRun();
+    return;
+  }
+
+  run.paused = false;
+  run.current = null;
+  run.setupZone = null;
+  run.setupPhase = null;
+  run.setupPulse = 0;
+  run.nextFreeze = 5 + Math.floor(Math.random()*5);
+
+  $("freezeBanner").classList.add("hidden");
+  $("answerPad").innerHTML = "";
+  $("timeText").textContent = "—";
+  $("runHint").textContent = `Quest ${run.questCount}/${run.maxQuests} complete. Watch the channel for the next setup.`;
+}
+
+
 function freezeScenario(){
   const pool = run.world.patterns;
 
-  // Stage 1: choose the coming scenario and start a visible setup build.
-  // This creates: market runs → setup forms → Quest Moment.
+  // Stage 1: market replays and setup begins forming. No timer here.
   if(!run.setupPattern){
     run.setupPattern = pool[Math.floor(Math.random()*pool.length)];
     run.setupTarget = getSetupTarget(run.setupPattern);
@@ -486,11 +557,12 @@ function freezeScenario(){
     run.setupPhase = "forming";
     run.setupPulse = 1;
     run.nextFreeze = run.setupSteps + 1;
+    $("timeText").textContent = "—";
     $("runHint").textContent = "Setup forming — watch how price behaves around the channel.";
     return;
   }
 
-  // Stage 2: print the answer candle and freeze.
+  // Stage 2: Quest Moment. Timer starts now.
   const answer = run.setupPattern;
   addCandle(answer);
   run.paused = true;
@@ -502,10 +574,11 @@ function freezeScenario(){
   run.setupPhase = "quest";
 
   $("freezeBanner").classList.remove("hidden");
-  $("runHint").textContent = "Quest Moment — read the channel, then choose the best answer.";
+  $("runHint").textContent = `Quest Moment ${run.questCount+1}/${run.maxQuests} — 7 seconds to answer.`;
   const options = shuffle([answer,...shuffle(pool.filter(x=>x!==answer)).slice(0,3)]);
   $("answerPad").innerHTML = options.map(o=>`<button onclick="answer('${o.replace(/'/g,"\\'")}')">${o}</button>`).join("");
   drawGame(true);
+  startQuestTimer();
 }
 
 function getSetupTarget(pattern){
@@ -535,79 +608,29 @@ function getSetupZone(pattern){
 
 function answer(label){
   if(!run || !run.current) return;
-  const ok = label===run.current;
-  if(ok){run.combo++; run.score += 10 + Math.min(10,run.combo*2);}
-  else{run.combo=0; run.score = Math.max(0,run.score-5);}
-  $("scoreText").textContent = run.score;
-  document.querySelectorAll("#answerPad button").forEach(b=>{
-    b.disabled=true;
-    if(b.textContent===run.current)b.classList.add("correct");
-    else if(b.textContent===label)b.classList.add("wrong");
-  });
-  setTimeout(()=>{
-    if(!run) return;
-    run.paused=false;
-    run.current=null;
-    run.setupZone=null;
-    run.setupPhase=null;
-    run.setupPulse=0;
-    run.nextFreeze=5+Math.floor(Math.random()*5);
-    $("freezeBanner").classList.add("hidden");
-    $("answerPad").innerHTML="";
-    $("runHint").textContent = "Watch the channel. A setup will form before the next Quest Moment.";
-  },700);
-}
+  stopQuestTimer();
 
-function drawFlatCandle(ctx,x,yO,yH,yL,yC,cw,green){
-  const color = green ? "#31c977" : "#ff5b5b";
-  const wickColor = green ? "#19a463" : "#e04444";
-  const bodyTop = Math.min(yO,yC);
-  const bodyBottom = Math.max(yO,yC);
-  const bodyH = Math.max(3, bodyBottom - bodyTop);
+  const ok = label === run.current;
 
-  const px = Math.round(x) + 0.5;
-  const left = Math.round(x - cw/2);
-  const top = Math.round(bodyTop);
-  const width = Math.max(3, Math.round(cw));
-  const height = Math.max(3, Math.round(bodyH));
-
-  ctx.strokeStyle = wickColor;
-  ctx.lineWidth = 2;
-  ctx.lineCap = "butt";
-  ctx.beginPath();
-  ctx.moveTo(px, Math.round(yH));
-  ctx.lineTo(px, Math.round(yL));
-  ctx.stroke();
-
-  ctx.fillStyle = color;
-  ctx.fillRect(left, top, width, height);
-
-  ctx.strokeStyle = wickColor;
-  ctx.lineWidth = 1;
-  ctx.strokeRect(left + 0.5, top + 0.5, width - 1, height - 1);
-}
-
-
-function drawLevelLabel(ctx,text,x,y,color){
-  ctx.save();
-  ctx.font="800 11px system-ui";
-  const w = ctx.measureText(text).width + 14;
-  const h = 20;
-  ctx.fillStyle="rgba(7,12,9,.82)";
-  ctx.strokeStyle=color;
-  ctx.lineWidth=1;
-  ctx.beginPath();
-  if(ctx.roundRect){
-    ctx.roundRect(x,y,w,h,8);
-    ctx.fill();
-    ctx.stroke();
+  if(ok){
+    const speedBonus = Math.max(0, run.questLeft || 0);
+    run.combo++;
+    run.score += 10 + Math.min(10, run.combo*2) + speedBonus;
   } else {
-    ctx.fillRect(x,y,w,h);
-    ctx.strokeRect(x,y,w,h);
+    run.combo = 0;
+    run.score = Math.max(0, run.score - 5);
   }
-  ctx.fillStyle="#ffffff";
-  ctx.fillText(text,x+7,y+14);
-  ctx.restore();
+
+  $("scoreText").textContent = run.score;
+  $("runHint").textContent = ok ? "Correct read — market resumes." : `Wrong read — answer was ${run.current}.`;
+
+  document.querySelectorAll("#answerPad button").forEach(b=>{
+    b.disabled = true;
+    if(b.textContent === run.current) b.classList.add("correct");
+    else if(b.textContent === label) b.classList.add("wrong");
+  });
+
+  setTimeout(()=>finishQuestMoment(),750);
 }
 
 function drawGame(frozen=false){
